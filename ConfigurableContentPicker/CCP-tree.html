@@ -1,0 +1,50 @@
+﻿<div>
+    <script type="text/ng-template" id="tree-item.html">
+        <a class="nodeExpandLink" ng-click="tree.ExpandNode(treeItem)" ng-hide="treeItem.Children.length === 0">
+            <img src="/App_Plugins/ConfigurableContentPicker/arrow-right.png" ng-hide="treeItem.IsExpanded" class="nonexpanded">
+            <img src="/App_Plugins/ConfigurableContentPicker/arrow-down.png" ng-show="treeItem.IsExpanded">
+        </a>
+        <img ng-src="/umbraco/images/umbraco/{{treeItem.Icon}}" class="nodeImage" />
+        <a href="javascript:void(0)" ng-show="treeItem.IsSelectable" ng-click="tree.SelectNode(treeItem)" class="selectableLink">
+            <p class="selectable" ng-class="{selectednode:treeItem.IsSelected}">
+                {{treeItem.Name}}
+            </p>
+        </a>
+        <p class="nonselectable" ng-hide="treeItem.IsSelectable">
+            {{treeItem.Name}}
+        </p>
+        <ul class="nodeUL" ng-show="treeItem.IsExpanded">
+            <li class="nodeLi" ng-repeat="treeItem in treeItem.Children" ng-include="'tree-item.html'">
+        </ul>
+    </script>
+    
+    <div class="tree" ng-controller="Cwo.CCP.Tree as tree">
+        <img src="/App_Plugins/ConfigurableContentPicker/loading.gif" ng-show="tree.Loading" alt="Loading Content Tree" />
+        
+        <div ng-show="tree.Errored">
+            <i>{{tree.ErrorMessage}}</i>
+            <br /><br />
+            <a href="javascirpt:void" ng-click="tree.ShowException = !tree.ShowException" ng-hide="tree.ShowException" class="exceptionMessage">
+                <img src="/App_Plugins/ConfigurableContentPicker/arrow-right.png" class="nonexpanded">
+                Additional Information
+            </a>
+            <div ng-show="tree.ShowException">
+                <a href="javascirpt:void" ng-click="tree.ShowException = !tree.ShowException" class="exceptionMessage">
+                    <img src="/App_Plugins/ConfigurableContentPicker/arrow-down.png">
+                    Additional Information
+                </a>
+                <br /><br />
+                {{tree.ExceptionMessage}}
+            </div>
+        </div>
+
+        <div ng-hide="tree.Errored">
+            <div ng-hide="tree.Loading">
+                <i ng-hide="tree.Structure.length > 0">No Content Found</i>
+                <ul class="nodeUL">
+                    <li class="nodeLi" ng-repeat="treeItem in tree.Structure" ng-include="'tree-item.html'">
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

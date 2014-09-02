@@ -1,0 +1,40 @@
+﻿{   
+    //you can define multiple editors   
+    propertyEditors: [      
+        {
+            /*this must be a unique alias*/ 
+            alias: "ccp",
+            /*the name*/
+            name: "Configurable Content Picker",
+            /*the html file we will load for the editor*/
+            editor: {
+                view: "~/App_Plugins/ConfigurableContentPicker/CCP-Tree.html"
+            },
+			prevalues: {
+				fields: [
+					{
+						label :"Select multiple content",
+						description : "Allow the user to select multiple content",
+						key : "AllowMulitpleContent",
+						view: "boolean"
+					},
+					{
+						label :"Document Type",
+						description : "Select the Document Types for the Content you want to be selectable",
+						key : "DocTypeId",
+						view: "~/App_Plugins/ConfigurableContentPicker/CCP-Settings.html"
+					}
+				]
+			}
+		}
+    ]
+    ,
+    //array of files we want to inject into the application on app_start
+    javascript: [
+        '~/App_Plugins/ConfigurableContentPicker/Cwo.CCP.Tree.js',
+		'~/App_Plugins/ConfigurableContentPicker/Cwo.CCP.Settings.js'
+    ],
+	css:[
+		'~/App_Plugins/ConfigurableContentPicker/CCP.css'
+	]
+}

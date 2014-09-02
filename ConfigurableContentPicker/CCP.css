@@ -1,0 +1,70 @@
+﻿
+div.tree li.nodeLi {
+    margin-top: 5px;
+        margin-bottom: 5px;
+    }
+
+div.tree a.selectableLink {
+     text-decoration: none;
+}
+
+div.tree a.selectableLink:hover {
+     text-decoration: none;
+    border: solid 1px #2e8aea;
+}
+
+div.tree img.nodeImage {
+        width: 16px;
+        height: 16px;
+        margin-right: 3px;
+    }
+
+div.tree img.nonexpanded {
+        margin-right: 5px;
+    }
+
+div.tree ul.nodeUL {
+        list-style-type: none;
+    }
+
+div.tree a.nodeExpandLink {
+        width: 10px;
+        margin-right: 5px;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+div.tree a.nodeExpandLink:hover {
+            text-decoration: none;
+    }
+
+div.tree p.nonselectable {
+        display: inline;
+        color: grey;
+    }
+
+div.tree p.selectable {
+        display: inline;
+    }
+
+ div.tree p.selectednode {
+        color: white;
+        background-color: #2e8aea;
+    }
+
+  div.tree a.exceptionMessage {
+     text-decoration: none;
+}
+
+ div.settings input.docTypeChk {
+     margin: 5px 5px 5px 0;
+}
+
+ div.settings a.exceptionMessage {
+     text-decoration: none;
+}
+
+
+ div.settings img.nonexpanded {
+        margin-right: 5px;
+    }

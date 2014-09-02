@@ -1,0 +1,50 @@
+﻿<div ng-controller="Cwo.CCP.Settings as settings" class="settings">
+    <img src="/App_Plugins/ConfigurableContentPicker/loading.gif" ng-show="settings.Loading" alt="Loading Document Types" />
+    <div ng-show="settings.Errored">
+        <i>{{settings.ErrorMessage}}</i>
+        <br /><br />
+        <a href="javascript:void(0)" ng-click="settings.ShowException =!settings.ShowException" ng-hide="settings.ShowException" class="exceptionMessage">
+            <img src="/App_Plugins/ConfigurableContentPicker/arrow-right.png" class="nonexpanded">
+            Additional Information
+        </a>
+        <div ng-show="settings.ShowException">
+            <a href="javascript:void(0)" ng-click="settings.ShowException =!settings.ShowException" class="exceptionMessage">
+                <img src="/App_Plugins/ConfigurableContentPicker/arrow-down.png">
+                Additional Information
+            </a>
+            <br /><br />
+            {{settings.ExceptionMessage}}
+        </div>
+    </div>
+    <div ng-hide="settings.Errored">
+        <div ng-hide="settings.Loading">
+            <p>
+                <strong>Selected:</strong>
+                <br />
+                <span ng-repeat="docType in settings.DocTypes" ng-show="docType.IsSelected">
+                    <input ng-checked="docType.IsSelected"
+                           ng-click="settings.SelectDocType(docType)"
+                           name="{{docType.Id}}"
+                           value="{{docType.Id}}"
+                           class="docTypeChk"
+                           type="checkbox">{{docType.Name}}<br />
+                </span>
+                <br />
+                <strong>Available: </strong>
+                <br />
+                <span>
+                    Filter: <input ng-model="searchText" />
+                </span>
+                <br />
+                <span ng-repeat="docType in settings.DocTypes | filter:searchText:settings.startsWith" ng-hide="docType.IsSelected">
+                    <input ng-checked="docType.IsSelected"
+                           ng-click="settings.SelectDocType(docType)"
+                           name="{{docType.Id}}"
+                           value="{{docType.Id}}"
+                           class="docTypeChk"
+                           type="checkbox">{{docType.Name}}<br />
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
