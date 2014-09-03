@@ -63,15 +63,15 @@
             var contentOfDocumentTypes = new List<ContentDTO>();
             var contentService = ApplicationContext.Current.Services.ContentService;
             
-            //get the Document Types that the Content needs to implement
+            //Get the Document Types that the Content needs to implement.
             var allDocTypes = GetAllSelectedDocTypes();
 
-            //get the list of selected content so it can be flagged as selected.
+            //Get the list of selected content so it can be flagged as selected.
             var allSelectedContentIds = GetAllSelectedContentIds();
             
             if (allDocTypes.Any())
             {
-                //get the content that is of the specified document types.
+                //Get the content that is of the specified document types.
                 foreach (var currentDocType in allDocTypes)
                 {
                     var contentList = contentService.GetContentOfContentType(currentDocType).Where(n => n.Status != ContentStatus.Trashed && n.Status != ContentStatus.Expired).ToList();
@@ -79,7 +79,7 @@
                     if (contentList.Any())
                     {
                         List<IContent> allContent;
-                        //if the current users start Content Id is not -1 then filter the content down to those that have the users starting content id in their Path.
+                        //If the current users start Content Id is not -1 then filter the content down to those that have the users starting content id in their Path.
                         if (startContentId > -1)
                         {
                             var pattern = string.Format(",\\s?{0},|{0}$", startContentId);
@@ -93,8 +93,8 @@
                         allContent.ForEach(n => ProcessContent(n, contentOfDocumentTypes, currentDocType, allSelectedContentIds, startContentId));
                     }
                 }
-                //re order the processed content so that it is in the same order as it would appear in the Content Tree.
-                contentOfDocumentTypes.ForEach(ReorderChildren);
+                //Re order the processed content so that it is in the same order as it would appear in the Content Tree.
+                contentOfDocumentTypes.ForEach(ReOrderChildren);
                 if (contentOfDocumentTypes.Any())
                 {
                     response.Content = contentOfDocumentTypes.OrderBy(d => d.SortOrder).ToList();
@@ -119,7 +119,7 @@
         if (allDocTypeIds != null)
         {
             int id;
-            //get the allowed Document Types
+            //Get the allowed Document Types.
             if (allDocTypeIds.IndexOf(",", StringComparison.Ordinal) > -1)
             {
                 var docTypesSplit = allDocTypeIds.Split(',');
@@ -156,7 +156,7 @@
                     var contentIds = selectedContentIds.Split(',');
                     foreach (var contentId in contentIds)
                     {
-                        //get the value of the selected content if set.
+                        //Get the value of the selected content if set.
                         if (int.TryParse(contentId, out selectedContentId))
                         {
                             allSelectedContentIds.Add(selectedContentId);
@@ -190,15 +190,25 @@
             var childDTO = contentDTO;
             while (parentContent != null && parentContent.Id >= startContentId)
             {
-                parentContentDTO = CreateContentDTO(parentContent, docTypeId, allSelectedContentIds);
-                parentContentDTO.Children.Add(childDTO);
-                if (!parentContentDTO.IsSelected)
+                //Ensure the current parentContent has not been trashed.
+                if (parentContent.Status != ContentStatus.Trashed)
                 {
-                    parentContentDTO.IsExpanded = childDTO.IsExpanded;
-                }
+                    parentContentDTO = CreateContentDTO(parentContent, docTypeId, allSelectedContentIds);
+                    parentContentDTO.Children.Add(childDTO);
+                    if (!parentContentDTO.IsSelected)
+                    {
+                        parentContentDTO.IsExpanded = childDTO.IsExpanded;
+                    }
 
-                childDTO = parentContentDTO;
-                parentContent = parentContent.Parent();
+                    childDTO = parentContentDTO;
+                    parentContent = parentContent.Parent();
+                }
+                else
+                {
+                    //If the parentContent has been trashed or expired we do not want to it or any children so end loop.
+                    parentContentDTO = null;
+                    break;
+                }
             }
             if (parentContentDTO != null)
             {
@@ -211,7 +221,7 @@
         }
         if (topContentDTO != null)
         {
-            //add the current content and its tree to the docTypeContent collection
+            //Add the current content and its tree to the docTypeContent collection
             AddContentToList(topContentDTO, docTypesContent);
         }
     }
@@ -252,12 +262,12 @@
         currentContentDTO.Children.ForEach(c => AddContentToList(c, existingContent.Children));
     }
 
-    private static void ReorderChildren(ContentDTO content)
+    private static void ReOrderChildren(ContentDTO content)
     {
         if (content.Children.Any())
         {
             content.Children = content.Children.OrderBy(c => c.SortOrder).ToList();
-            content.Children.ForEach(ReorderChildren);
+            content.Children.ForEach(ReOrderChildren);
         }
     }
 

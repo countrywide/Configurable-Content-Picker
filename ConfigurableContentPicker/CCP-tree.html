@@ -4,7 +4,8 @@
             <img src="/App_Plugins/ConfigurableContentPicker/arrow-right.png" ng-hide="treeItem.IsExpanded" class="nonexpanded">
             <img src="/App_Plugins/ConfigurableContentPicker/arrow-down.png" ng-show="treeItem.IsExpanded">
         </a>
-        <img ng-src="/umbraco/images/umbraco/{{treeItem.Icon}}" class="nodeImage" />
+        <img ng-src="/umbraco/images/umbraco/{{treeItem.Icon}}" class="nodeImage" ng-show="treeItem.Icon !='.sprTreeDoc'" />
+        <i class="icon-document" ng-hide="treeItem.Icon !='.sprTreeDoc'"></i>
         <a href="javascript:void(0)" ng-show="treeItem.IsSelectable" ng-click="tree.SelectNode(treeItem)" class="selectableLink">
             <p class="selectable" ng-class="{selectednode:treeItem.IsSelected}">
                 {{treeItem.Name}}

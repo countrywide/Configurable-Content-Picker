@@ -24,7 +24,7 @@
                 }
             } else {
 
-                //if control has been changes from allowing multiple selection to singular select only 
+                //If control has been changed from allowing multiple selection to singular select only 
                 //the model value may be an array, if this is the case we need to reset the controls value.
                 if (value.indexOf(",") > -1) {
                     tree.SelectedNodeId = "";
@@ -63,11 +63,19 @@
                     tree.Structure = response.Content;
                     if (tree.AllowMultipleSelection) {
                         if (tree.SelectedNodesIds.length > 0) {
+                            //Reset the tree.SelectedNodesIds collection so that it can be repopulated based upon content returned, if 
+                            //the collection contained a Node that is no longer available then it would never be removed.
+                            tree.SelectedNodesIds = [];
                             tree.SetSelectedNode(tree.Structure);
+                            $scope.model.value = tree.SelectedNodesIds.toString();
                         }
                     } else {
                         if (tree.SelectedNodeId != "") {
+                            //Reset the tree.SelectedNodeId so that it can be repopulated based upon content returned, if 
+                            //tree.SelectedNodeId is for a Node that is no longer available it isn't a valid value.
+                            tree.SelectedNodeId = "";
                             tree.SetSelectedNode(tree.Structure);
+                            $scope.model.value = tree.SelectedNodeId;
                         }
                     }
                 }
@@ -81,7 +89,10 @@
                 if (node.IsSelected) {
                     tree.SelectedNodes.push(node);
                     if (tree.AllowMultipleSelection) {
+                        tree.SelectedNodesIds.push(node.Id);
                         tree.SetSelectedNode(node.Children);
+                    } else {
+                        tree.SelectedNodeId = node.Id.toString();
                     }
                 } else {
                     if (node.Children.length > 0) {
@@ -120,7 +131,7 @@
 
                 var singleNodeIndex = tree.SelectedNodes.indexOf(node);
                 if (singleNodeIndex > -1) {
-                    //node already selected so we must be deselecting it
+                    //Node already selected so we must be deselecting it
                     tree.SelectedNodes[0].IsSelected = false;
                     tree.SelectedNodes = [];
                     tree.SelectedNodeId = "";
@@ -137,7 +148,6 @@
                 $scope.model.value = tree.SelectedNodeId;
             }
         };
-
         tree.GetNodesForDocType();
     }
 ]);
