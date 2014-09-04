@@ -8,6 +8,7 @@
         tree.Loading = true;
         tree.SelectedNodesIds = [];
         tree.SelectedNodeId = "";
+        tree.ShowTree = true;
         var value = $scope.model.value;
        
         if (value !== "") {
@@ -63,6 +64,9 @@
                     tree.Structure = response.Content;
                     if (tree.AllowMultipleSelection) {
                         if (tree.SelectedNodesIds.length > 0) {
+                            //hide the tree and show selected summary if we have any content selected
+                            tree.ShowTree = false;
+
                             //Reset the tree.SelectedNodesIds collection so that it can be repopulated based upon content returned, if 
                             //the collection contained a Node that is no longer available then it would never be removed.
                             tree.SelectedNodesIds = [];
@@ -71,6 +75,9 @@
                         }
                     } else {
                         if (tree.SelectedNodeId != "") {
+                            //hide the tree and show selected summary if we have any content selected
+                            tree.ShowTree = false;
+
                             //Reset the tree.SelectedNodeId so that it can be repopulated based upon content returned, if 
                             //tree.SelectedNodeId is for a Node that is no longer available it isn't a valid value.
                             tree.SelectedNodeId = "";
@@ -148,6 +155,20 @@
                 $scope.model.value = tree.SelectedNodeId;
             }
         };
+
+        tree.GetSelectedPath = function () {
+            var selected = "<ul class=\"selectedSummary\">";
+            if (tree.SelectedNodes.length > 0) {
+                for (var s = 0; s < tree.SelectedNodes.length; s++) {
+                    selected += "<li>" + tree.SelectedNodes[s].Path + "</li>";
+                }
+            } else {
+                selected += "<li>No Content Selected</li>";
+            }
+            selected += "</ul>";
+            return selected;
+        };
+
         tree.GetNodesForDocType();
     }
 ]);

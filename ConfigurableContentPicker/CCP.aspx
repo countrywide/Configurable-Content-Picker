@@ -222,7 +222,25 @@
         if (topContentDTO != null)
         {
             //Add the current content and its tree to the docTypeContent collection
+            SetPath(topContentDTO);
             AddContentToList(topContentDTO, docTypesContent);
+        }
+    }
+
+    private static void SetPath(ContentDTO content, string parentPath = "")
+    {
+        if (string.IsNullOrEmpty(parentPath))
+        {
+            content.Path = content.Name;
+        }
+        else
+        {
+            content.Path = string.Format("{0} / {1}", parentPath, content.Name);
+        }
+
+        if (content.Children.Any())
+        {
+            content.Children.ForEach(c => SetPath(c, content.Path));
         }
     }
 
@@ -239,7 +257,7 @@
             DocTypeId = currentContent.ContentTypeId.ToString(),
             IsSelected = allSelectedContentIds.Contains(currentContent.Id),
             IsExpanded = allSelectedContentIds.Contains(currentContent.Id),
-            IsSelectable = currentContent.ContentTypeId == docTypeId
+            IsSelectable = currentContent.ContentTypeId == docTypeId,
         };
         return newContentDTO;
     }
@@ -333,6 +351,8 @@
 
         public string DocTypeId { get; set; }
 
+        public string Path { get; set; }
+        
         public List<ContentDTO> Children { get; set; }
 
         public ContentDTO()

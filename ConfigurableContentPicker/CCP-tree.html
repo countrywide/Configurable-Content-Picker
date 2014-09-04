@@ -42,9 +42,29 @@
         <div ng-hide="tree.Errored">
             <div ng-hide="tree.Loading">
                 <i ng-hide="tree.Structure.length > 0">No Content Found</i>
-                <ul class="nodeUL">
-                    <li class="nodeLi" ng-repeat="treeItem in tree.Structure" ng-include="'tree-item.html'">
-                </ul>
+                <p ng-repeat ="selectedItem in tree.SelectedNodes">
+                    <img ng-src="/umbraco/images/umbraco/{{selectedItem.Icon}}" class="nodeImage" ng-show="selectedItem.Icon !='.sprTreeDoc'" />
+                    <i class="icon-document" ng-hide="selectedItem.Icon !='.sprTreeDoc'"></i>
+                    {{selectedItem.Path}}
+                    <a href="javascript:void(0);" ng-click="tree.SelectNode(selectedItem)"><img src="/app_plugins/ConfigurableContentPicker/delete.png" Alt="Delete {{selectedItem.Name}}"></a>
+                </p>
+                <p ng-show="tree.SelectedNodes.length==0">
+                    No Content Selected
+                </p>
+              
+                <a href="javascript:void(0);" ng-hide="tree.ShowTree" ng-click="tree.ShowTree = true">
+                    <img src="/App_Plugins/ConfigurableContentPicker/arrow-right.png" class="nonexpanded">
+                    Show Tree
+                </a>
+                <a href="javascript:void(0);" ng-show="tree.ShowTree" ng-click="tree.ShowTree = false">
+                    <img src="/App_Plugins/ConfigurableContentPicker/arrow-down.png" class="nonexpanded">
+                    Hide Tree
+                </a>
+                <div ng-show="tree.ShowTree">
+                    <ul>
+                        <li class="nodeLi" ng-repeat="treeItem in tree.Structure" ng-include="'tree-item.html'">
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
