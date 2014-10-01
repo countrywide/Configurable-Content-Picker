@@ -93,6 +93,7 @@
         tree.SetSelectedNode = function(structure) {
             for (var y = 0; y < structure.length; y++) {
                 var node = structure[y];
+                node.IconHtml = tree.GetIcon(node.Icon);
                 if (node.IsSelected) {
                     tree.SelectedNodes.push(node);
                     if (tree.AllowMultipleSelection) {
@@ -151,7 +152,6 @@
                     tree.SelectedNodes.push(node);
                     tree.SelectedNodeId = node.Id.toString();
                 }
-
                 $scope.model.value = tree.SelectedNodeId;
             }
         };
@@ -167,6 +167,22 @@
             }
             selected += "</ul>";
             return selected;
+        };
+
+        tree.GetIcon = function (icon) {
+            var response = "";
+            if (icon) {
+                if (icon.endsWith(".jpg") || icon.endsWith(".png") || icon.endsWith(".gif") || icon.endsWith(".ico")) {
+                    response = '<img src="/umbraco/images/umbraco/' + icon + '" class="nodeImage" />';
+                } else if (icon === ".sprTreeDoc") {
+                    response = '<i class="icon-document"></i>';
+                } else if (icon === ".sprTreeFolder") {
+                    response = '<i class="icon-folder"></i>';
+                } else {
+                    response = '<i class="' + icon + '"></i>';
+                }
+            }
+            return response;
         };
 
         tree.GetNodesForDocType();

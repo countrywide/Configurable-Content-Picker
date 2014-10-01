@@ -4,8 +4,7 @@
             <img src="/App_Plugins/ConfigurableContentPicker/arrow-right.png" ng-hide="treeItem.IsExpanded" class="nonexpanded">
             <img src="/App_Plugins/ConfigurableContentPicker/arrow-down.png" ng-show="treeItem.IsExpanded">
         </a>
-        <img ng-src="/umbraco/images/umbraco/{{treeItem.Icon}}" class="nodeImage" ng-show="treeItem.Icon !='.sprTreeDoc'" />
-        <i class="icon-document" ng-hide="treeItem.Icon !='.sprTreeDoc'"></i>
+        <span ng-bind-html-unsafe="treeItem.IconHtml"></span>
         <a href="javascript:void(0)" ng-show="treeItem.IsSelectable" ng-click="tree.SelectNode(treeItem)" class="selectableLink">
             <p class="selectable" ng-class="{selectednode:treeItem.IsSelected}">
                 {{treeItem.Name}}
@@ -43,8 +42,7 @@
             <div ng-hide="tree.Loading">
                 <i ng-hide="tree.Structure.length > 0">No Content Found</i>
                 <p ng-repeat ="selectedItem in tree.SelectedNodes">
-                    <img ng-src="/umbraco/images/umbraco/{{selectedItem.Icon}}" class="nodeImage" ng-show="selectedItem.Icon !='.sprTreeDoc'" />
-                    <i class="icon-document" ng-hide="selectedItem.Icon !='.sprTreeDoc'"></i>
+                    <span ng-bind-html-unsafe="selectedItem.IconHtml"></span>
                     {{selectedItem.Path}}
                     <a href="javascript:void(0);" ng-click="tree.SelectNode(selectedItem)"><img src="/app_plugins/ConfigurableContentPicker/delete.png" Alt="Delete {{selectedItem.Name}}"></a>
                 </p>
