@@ -19,8 +19,6 @@
     </script>
     
     <div class="tree" ng-controller="Cwo.CCP.Tree as tree">
-        <img src="/App_Plugins/ConfigurableContentPicker/loading.gif" ng-show="tree.Loading" alt="Loading Content Tree" />
-        
         <div ng-show="tree.Errored">
             <i>{{tree.ErrorMessage}}</i>
             <br /><br />
@@ -39,26 +37,30 @@
         </div>
 
         <div ng-hide="tree.Errored">
-            <div ng-hide="tree.Loading">
-                <i ng-hide="tree.Structure.length > 0">No Content Found</i>
-                <p ng-repeat ="selectedItem in tree.SelectedNodes">
+            <img src="/App_Plugins/ConfigurableContentPicker/loading.gif" ng-show="tree.LoadingSelectedDetails" alt="Loading Selected Content" />
+            <div ng-hide="tree.LoadingSelectedDetails">
+                <p ng-repeat="selectedItem in tree.SelectedNodes">
                     <span ng-bind-html-unsafe="selectedItem.IconHtml"></span>
                     {{selectedItem.Path}}
-                    <a href="javascript:void(0);" ng-click="tree.SelectNode(selectedItem)"><img src="/app_plugins/ConfigurableContentPicker/delete.png" Alt="Delete {{selectedItem.Name}}"></a>
+                    <a href="javascript:void(0);" ng-click="tree.SelectNode(selectedItem)"><img src="/app_plugins/ConfigurableContentPicker/delete.png" alt="Delete {{selectedItem.Name}}"></a>
                 </p>
                 <p ng-show="tree.SelectedNodes.length==0">
                     No Content Selected
                 </p>
-              
-                <a href="javascript:void(0);" ng-hide="tree.ShowTree" ng-click="tree.ShowTree = true">
-                    <img src="/App_Plugins/ConfigurableContentPicker/arrow-right.png" class="nonexpanded">
-                    Show Tree
-                </a>
-                <a href="javascript:void(0);" ng-show="tree.ShowTree" ng-click="tree.ShowTree = false">
-                    <img src="/App_Plugins/ConfigurableContentPicker/arrow-down.png" class="nonexpanded">
-                    Hide Tree
-                </a>
-                <div ng-show="tree.ShowTree">
+            </div>
+            <a href="javascript:void(0);" ng-hide="tree.ShowTree" ng-click="tree.ShowTreeAction()">
+                <img src="/App_Plugins/ConfigurableContentPicker/arrow-right.png" class="nonexpanded" alt="Show Node Tree">
+                Show Tree
+            </a>
+            <a href="javascript:void(0);" ng-show="tree.ShowTree" ng-click="tree.ShowTree = false">
+                <img src="/App_Plugins/ConfigurableContentPicker/arrow-down.png" class="nonexpanded" alt="Hide Node Tree">
+                Hide Tree
+            </a>
+
+            <div ng-show="tree.ShowTree">
+                <img src="/App_Plugins/ConfigurableContentPicker/loading.gif" ng-show="tree.Loading" alt="Loading Content Tree" />
+                <div ng-hide="tree.Loading">
+                    <i ng-hide="tree.Structure.length > 0">No Content Found</i>
                     <ul>
                         <li class="nodeLi" ng-repeat="treeItem in tree.Structure" ng-include="'tree-item.html'">
                     </ul>

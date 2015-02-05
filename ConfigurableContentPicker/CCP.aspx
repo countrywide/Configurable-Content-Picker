@@ -26,10 +26,37 @@
                         var startContentId = currentUser.StartContentId;
                         response = new JavaScriptSerializer().Serialize(GetContentOfDocType(startContentId));
                         break;
+                    case "getselecteddetails":
+                        response = new JavaScriptSerializer().Serialize(GetSelectedContentDetails());
+                        break;
                 }
             }
         }
         HttpContext.Current.Response.Write(response);
+    }
+
+    private GetSelectedDetailsResponse GetSelectedContentDetails()
+    {
+        var response = new GetSelectedDetailsResponse();
+        var allSelectedContentIds = GetAllSelectedContentIds();
+        var contentService = ApplicationContext.Current.Services.ContentService;
+        foreach (var selectedId in allSelectedContentIds)
+        {
+            var content = contentService.GetById(selectedId);
+            var parentId = content.ParentId;
+            var parentPath = string.Empty;
+            while (parentId > -1)
+            {
+                var parentNode = contentService.GetById(parentId);
+                parentPath = string.Format("{0} / {1}", parentNode.Name, parentPath);
+                parentId = parentNode.ParentId;
+            }
+            var contentDTO = CreateContentDTO(content, content.ContentTypeId, allSelectedContentIds);
+            SetPath(contentDTO, parentPath);
+            response.Content.Add(contentDTO);
+        }
+        
+        return response;
     }
 
     private static GetDocTypesResponse GetAllDocTypes()
@@ -235,6 +262,10 @@
         }
         else
         {
+            if (parentPath.Trim().EndsWith("/"))
+            {
+                parentPath = parentPath.Substring(0, parentPath.LastIndexOf("/", StringComparison.Ordinal));
+            }
             content.Path = string.Format("{0} / {1}", parentPath, content.Name);
         }
 
@@ -319,6 +350,16 @@
         }
     }
 
+    private class GetSelectedDetailsResponse : BaseResponse
+    {
+        public List<ContentDTO> Content { get; set; }
+
+        public GetSelectedDetailsResponse()
+        {
+            Content = new List<ContentDTO>();
+        }
+    }
+    
     private class GetDocTypesResponse : BaseResponse
     {
         public List<DocumentTypeDTO> DocumentTypes { get; set; }

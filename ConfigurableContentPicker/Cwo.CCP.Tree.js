@@ -5,37 +5,11 @@
         tree.DocTypes = $scope.model.config.DocTypeId;
         tree.AllowMultipleSelection = $scope.model.config.AllowMulitpleContent === "1";
         tree.Structure = [];
-        tree.Loading = true;
+        tree.Loading = false;
         tree.SelectedNodesIds = [];
-        tree.SelectedNodeId = "";
-        tree.ShowTree = true;
-        var value = $scope.model.value;
-       
-        if (value !== "") {
-            if (tree.AllowMultipleSelection) {
-
-                if (value.indexOf(",") > -1) {
-                    var selectedValues = value.split(",");
-                    for (var x = 0; x < selectedValues.length; x++) {
-                        tree.SelectedNodesIds.push(Number(selectedValues[x]));
-                    }
-
-                } else {
-                    tree.SelectedNodesIds.push(Number(value));
-                }
-            } else {
-
-                //If control has been changed from allowing multiple selection to singular select only 
-                //the model value may be an array, if this is the case we need to reset the controls value.
-                if (value.indexOf(",") > -1) {
-                    tree.SelectedNodeId = "";
-                    $scope.model.value = "";
-                } else {
-                    tree.SelectedNodeId = Number($scope.model.value);
-                }
-            }
-        }
-
+        tree.RetrievedTree = false;
+        tree.ShowTree = false;
+        tree.LoadingSelectedDetails = false;
         tree.SelectedNodes = [];
         tree.Errored = false;
         tree.ErrorMessage = "";
@@ -43,15 +17,48 @@
         tree.ShowException = false;
         tree.Message = "";
 
+        var value = $scope.model.value;
+      
+        if (value !== "") {
+            if (value.indexOf(",") > -1) {
+                var selectedValues = value.split(",");
+                for (var x = 0; x < selectedValues.length; x++) {
+                    tree.SelectedNodesIds.push(Number(selectedValues[x]));
+                }
+            } else {
+                tree.SelectedNodesIds.push(Number(value));
+            }
+        }
+
+        if (!tree.AllowMultipleSelection && tree.SelectedNodesIds.length > 1) {
+            tree.SelectedNodesIds = [];
+            tree.SelectedNodes = [];
+        }
+
+        tree.GetSelectedDetails = function() {
+            var selected = tree.SelectedNodesIds;
+            tree.LoadingSelectedDetails = true;
+            $http.get("/app_plugins/ConfigurableContentPicker/CCP.aspx?action=GetSelectedDetails&SelectedContentId=" + selected).success(function(response) {
+                tree.ErrorMessage = response.ErrorMessage;
+                if (tree.ErrorMessage.length > 0) {
+                    tree.ExceptionMessage = response.Exception;
+                    tree.Errored = true;
+                } else {
+                    tree.Errored = false;
+                    tree.SelectedNodes = response.Content;
+                    for (var a = 0; a < tree.SelectedNodes.length; a++) {
+                        var node = tree.SelectedNodes[a];
+                        node.IconHtml = tree.GetIcon(node.Icon);
+                    }
+                }
+                tree.LoadingSelectedDetails = false;
+            });
+        };
+
         tree.GetNodesForDocType = function() {
             tree.Loading = true;
             var selected = "";
-
-            if (tree.AllowMultipleSelection) {
-                selected = tree.SelectedNodesIds;
-            } else {
-                selected = tree.SelectedNodeId;
-            }
+            selected = tree.SelectedNodesIds;
 
             $http.get("/app_plugins/ConfigurableContentPicker/CCP.aspx?action=GetContent&DocTypeId=" + tree.DocTypes + "&SelectedContentId=" + selected).success(function(response) {
                 tree.ErrorMessage = response.ErrorMessage;
@@ -62,31 +69,15 @@
                     tree.Errored = false;
                     tree.Message = response.Message;
                     tree.Structure = response.Content;
-                    if (tree.AllowMultipleSelection) {
-                        if (tree.SelectedNodesIds.length > 0) {
-                            //hide the tree and show selected summary if we have any content selected
-                            tree.ShowTree = false;
 
-                            //Reset the tree.SelectedNodesIds collection so that it can be repopulated based upon content returned, if 
-                            //the collection contained a Node that is no longer available then it would never be removed.
-                            tree.SelectedNodesIds = [];
-                            tree.SetSelectedNode(tree.Structure);
-                            $scope.model.value = tree.SelectedNodesIds.toString();
-                        }
-                    } else {
-                        if (tree.SelectedNodeId != "") {
-                            //hide the tree and show selected summary if we have any content selected
-                            tree.ShowTree = false;
-
-                            //Reset the tree.SelectedNodeId so that it can be repopulated based upon content returned, if 
-                            //tree.SelectedNodeId is for a Node that is no longer available it isn't a valid value.
-                            tree.SelectedNodeId = "";
-                            tree.SetSelectedNode(tree.Structure);
-                            $scope.model.value = tree.SelectedNodeId;
-                        }
-                    }
+                    //reset the SelectedNodes collection so that we can tie it up to the nodes in the tree. Current values would be populated by the GetSelectedDetails method call and
+                    //so wouldnt be able to refernece the same nodes as appearing in the tree.  We need to reference the nodes in the tree to support the selection higlighting.
+                    tree.SelectedNodes = [];
+                    tree.SelectedNodesIds = [];
+                    tree.SetSelectedNode(tree.Structure);
                 }
                 tree.Loading = false;
+                tree.RetrievedTree = true;
             });
         };
 
@@ -96,16 +87,10 @@
                 node.IconHtml = tree.GetIcon(node.Icon);
                 if (node.IsSelected) {
                     tree.SelectedNodes.push(node);
-                    if (tree.AllowMultipleSelection) {
-                        tree.SelectedNodesIds.push(node.Id);
-                        tree.SetSelectedNode(node.Children);
-                    } else {
-                        tree.SelectedNodeId = node.Id.toString();
-                    }
-                } else {
-                    if (node.Children.length > 0) {
-                        tree.SetSelectedNode(node.Children);
-                    }
+                    tree.SelectedNodesIds.push(node.Id);
+                }
+                if (node.Children.length > 0) {
+                    tree.SetSelectedNode(node.Children);
                 }
             }
         };
@@ -118,55 +103,49 @@
             }
         };
 
-        tree.SelectNode = function(node) {
-            if (tree.AllowMultipleSelection) {
-                var nodeIndex = tree.SelectedNodesIds.indexOf(node.Id);
-                if (nodeIndex > -1) {
-                    tree.SelectedNodesIds.splice(nodeIndex, 1);
-                    var selectedNodeIndex = tree.SelectedNodes.indexOf(node);
-                    if (selectedNodeIndex > -1) {
-                        var selectedNode = tree.SelectedNodes[selectedNodeIndex];
-                        selectedNode.IsSelected = false;
-                        tree.SelectedNodes.splice(selectedNodeIndex, 1);
-                    }
-                } else {
-                    node.IsSelected = true;
-                    tree.SelectedNodesIds.push(node.Id);
-                    tree.SelectedNodes.push(node);
-                }
-                $scope.model.value = tree.SelectedNodesIds.toString();
-            } else {
-
-                var singleNodeIndex = tree.SelectedNodes.indexOf(node);
-                if (singleNodeIndex > -1) {
-                    //Node already selected so we must be deselecting it
-                    tree.SelectedNodes[0].IsSelected = false;
-                    tree.SelectedNodes = [];
-                    tree.SelectedNodeId = "";
-                } else {
-                    node.IsSelected = true;
+        tree.SelectNode = function (node) {
+            var alreadySelected = tree.RemoveAlreadySelectedNode(node.Id);
+            //if not alreadySelected, and so is actually being deselected, add the new node to the selected collection
+            if (!alreadySelected) {
+                node.IsSelected = true;
+                if (!tree.AllowMultipleSelection) {
+                    tree.SelectedNodesIds = [];
                     if (tree.SelectedNodes.length > 0) {
                         tree.SelectedNodes[0].IsSelected = false;
-                        tree.SelectedNodes = [];
                     }
-                    tree.SelectedNodes.push(node);
-                    tree.SelectedNodeId = node.Id.toString();
+                    tree.SelectedNodes = [];
                 }
-                $scope.model.value = tree.SelectedNodeId;
+                tree.SelectedNodesIds.push(node.Id);
+                tree.SelectedNodes.push(node);
+              
+            } else {
+                node.IsSelected = false;
             }
+            $scope.model.value = tree.SelectedNodesIds.toString();
         };
 
-        tree.GetSelectedPath = function () {
-            var selected = "<ul class=\"selectedSummary\">";
-            if (tree.SelectedNodes.length > 0) {
-                for (var s = 0; s < tree.SelectedNodes.length; s++) {
-                    selected += "<li>" + tree.SelectedNodes[s].Path + "</li>";
+        tree.RemoveAlreadySelectedNode = function(nodeId) {
+            var index = 0;
+            var alreadySelected = false;
+            for (var s = 0; s < tree.SelectedNodes.length; s++) {
+                var node = tree.SelectedNodes[s];
+                if (node.Id === nodeId) {
+                    node.IsSelected = false;
+                    tree.SelectedNodes.splice(index, 1);
+                    alreadySelected = true;
                 }
-            } else {
-                selected += "<li>No Content Selected</li>";
+                index++;
             }
-            selected += "</ul>";
-            return selected;
+            if (alreadySelected) {
+                index = 0;
+                for (var p = 0; p < tree.SelectedNodesIds.length; p++) {
+                    if (tree.SelectedNodesIds[p] === nodeId) {
+                        tree.SelectedNodesIds.splice(index, 1);
+                    }
+                    index++;
+                }
+            }
+            return alreadySelected;
         };
 
         tree.GetIcon = function (icon) {
@@ -185,6 +164,13 @@
             return response;
         };
 
-        tree.GetNodesForDocType();
+        tree.ShowTreeAction = function () {
+            if (!tree.RetrievedTree) {
+                tree.GetNodesForDocType();
+            }
+            tree.ShowTree = true;
+        };
+
+        tree.GetSelectedDetails();
     }
 ]);
