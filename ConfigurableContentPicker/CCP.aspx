@@ -2,16 +2,20 @@
 <%@ Import Namespace="Umbraco.Core" %>
 <%@ Import Namespace="Umbraco.Core.Logging" %>
 <%@ Import Namespace="Umbraco.Core.Models" %>
+<%@ Import Namespace="Umbraco.Core.Models.Membership" %>
+<%@ Import Namespace="Umbraco.Core.Security" %>
 <%@ Import Namespace="System.Web.Script.Serialization" %>
 <%@ Import Namespace="Umbraco.Web" %>
 <%@ Import Namespace="System.Reflection" %>
+
 
 <script language="c#" runat="server">
  
     public void Page_Load(object sender, EventArgs e)
     {
         var response = string.Empty;
-        var currentUser = UmbracoContext.Current.Security.CurrentUser;
+
+        var currentUser = new HttpContextWrapper(HttpContext.Current).GetUmbracoAuthTicket().Name;
         if (currentUser != null)
         {
             var method = Request.QueryString["Action"];
@@ -23,7 +27,7 @@
                         response = new JavaScriptSerializer().Serialize(GetAllDocTypes());
                         break;
                     case "getcontent":
-                        var startContentId = currentUser.StartContentId;
+                        var startContentId = ApplicationContext.Current.Services.UserService.GetByUsername(currentUser).StartContentId;
                         response = new JavaScriptSerializer().Serialize(GetContentOfDocType(startContentId));
                         break;
                     case "getselecteddetails":
@@ -51,7 +55,7 @@
                 parentPath = string.Format("{0} / {1}", parentNode.Name, parentPath);
                 parentId = parentNode.ParentId;
             }
-            var contentDTO = CreateContentDTO(content, content.ContentTypeId, allSelectedContentIds);
+            var contentDTO = CreateContentDTO(content,new List<int>{content.ContentTypeId}, allSelectedContentIds);
             SetPath(contentDTO, parentPath);
             response.Content.Add(contentDTO);
         }
@@ -84,47 +88,48 @@
     private GetContentResponse GetContentOfDocType(int startContentId)
     {
         var response = new GetContentResponse();
-        
+
         try
         {
             var contentOfDocumentTypes = new List<ContentDTO>();
             var contentService = ApplicationContext.Current.Services.ContentService;
-            
+
             //Get the Document Types that the Content needs to implement.
             var allDocTypes = GetAllSelectedDocTypes();
 
             //Get the list of selected content so it can be flagged as selected.
             var allSelectedContentIds = GetAllSelectedContentIds();
-            
+
             if (allDocTypes.Any())
             {
+                var contentList = new List<IContent>();
                 //Get the content that is of the specified document types.
                 foreach (var currentDocType in allDocTypes)
                 {
-                    var contentList = contentService.GetContentOfContentType(currentDocType).Where(n => n.Status != ContentStatus.Trashed && n.Status != ContentStatus.Expired).ToList();
-
-                    if (contentList.Any())
-                    {
-                        List<IContent> allContent;
-                        //If the current users start Content Id is not -1 then filter the content down to those that have the users starting content id in their Path.
-                        if (startContentId > -1)
-                        {
-                            var pattern = string.Format(",\\s?{0},|{0}$", startContentId);
-                            var regex = new Regex(pattern);
-                            allContent = contentList.Where(n => regex.IsMatch(n.Path)).ToList();
-                        }
-                        else
-                        {
-                            allContent = contentList.ToList();
-                        }
-                        allContent.ForEach(n => ProcessContent(n, contentOfDocumentTypes, currentDocType, allSelectedContentIds, startContentId));
-                    }
+                    contentList.AddRange(contentService.GetContentOfContentType(currentDocType).Where(n => n.Status != ContentStatus.Trashed && n.Status != ContentStatus.Expired).ToList());
                 }
-                //Re order the processed content so that it is in the same order as it would appear in the Content Tree.
-                contentOfDocumentTypes.ForEach(ReOrderChildren);
-                if (contentOfDocumentTypes.Any())
+                if (contentList.Any())
                 {
-                    response.Content = contentOfDocumentTypes.OrderBy(d => d.SortOrder).ToList();
+                    List<IContent> allContent;
+                    //If the current users start Content Id is not -1 then filter the content down to those that have the users starting content id in their Path.
+                    if (startContentId > -1)
+                    {
+                        var pattern = string.Format(",\\s?{0},|{0}$", startContentId);
+                        var regex = new Regex(pattern);
+                        allContent = contentList.Where(n => regex.IsMatch(n.Path)).ToList();
+                    }
+                    else
+                    {
+                        allContent = contentList.ToList();
+                    }
+                    allContent.ForEach(n => ProcessContent(n, contentOfDocumentTypes, allDocTypes, allSelectedContentIds, startContentId));
+
+                    //Re order the processed content so that it is in the same order as it would appear in the Content Tree.
+                    contentOfDocumentTypes.ForEach(ReOrderChildren);
+                    if (contentOfDocumentTypes.Any())
+                    {
+                        response.Content = contentOfDocumentTypes.OrderBy(d => d.SortOrder).ToList();
+                    }
                 }
             }
             else
@@ -203,7 +208,7 @@
     }
 
 
-    private static void ProcessContent(IContent currentContent, List<ContentDTO> docTypesContent, int docTypeId, List<int> allSelectedContentIds, int startContentId)
+    private static void ProcessContent(IContent currentContent, List<ContentDTO> docTypesContent, List<int> docTypeId, List<int> allSelectedContentIds, int startContentId)
     {
         var parentContentId = currentContent.ParentId;
         ContentDTO topContentDTO = null;
@@ -275,7 +280,7 @@
         }
     }
 
-    private static ContentDTO CreateContentDTO(IContent currentContent, int docTypeId, List<int> allSelectedContentIds)
+    private static ContentDTO CreateContentDTO(IContent currentContent, List<int> docTypeId, List<int> allSelectedContentIds)
     {
         var newContentDTO = new ContentDTO
         {
@@ -288,7 +293,7 @@
             DocTypeId = currentContent.ContentTypeId.ToString(),
             IsSelected = allSelectedContentIds.Contains(currentContent.Id),
             IsExpanded = allSelectedContentIds.Contains(currentContent.Id),
-            IsSelectable = currentContent.ContentTypeId == docTypeId,
+            IsSelectable =docTypeId.Contains(currentContent.ContentTypeId)
         };
         return newContentDTO;
     }
